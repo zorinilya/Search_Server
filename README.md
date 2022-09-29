@@ -39,7 +39,7 @@ search_server.AddDocument(5, "big dog sparrow Vasiliy"s, DocumentStatus::ACTUAL,
 
 FindTopDocuments(search_server, "big white dog");
 FindTopDocuments(search_server, "big white dog -collar");
-```C++
+```
 Вывод:
 Второй и третий документ не попали в результат поиска, т.к. содержат слово _collar_.
 
