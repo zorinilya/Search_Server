@@ -1,4 +1,5 @@
 #pragma once
+
 #include "string_processing.h"
 #include "document.h"
 
@@ -19,10 +20,11 @@ public:
     SearchServer(const StringCollection& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words))
     {
-    	using namespace std::string_literals;
-        if (std::all_of(stop_words_.begin(), stop_words_.end(),
-                [](const std::string& stop_word) { return !IsValidWord(stop_word); })) {
-            throw std::invalid_argument("invalid char (with codes from 0 to 31)"s);
+        using namespace std::string_literals;
+        for (const std::string& stop_word : stop_words_) {
+            if (!IsValidWord(stop_word)) {
+                throw std::invalid_argument("invalid char (with codes from 0 to 31)"s);
+            }
         }
     }
 
@@ -41,6 +43,14 @@ public:
 
     int GetDocumentId(int index) const;
 
+    std::set<int>::iterator begin();
+
+    std::set<int>::iterator end();
+
+    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
+
+    void RemoveDocument(int document_id);
+
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
 
 private:
@@ -51,8 +61,9 @@ private:
 
     std::set<std::string> stop_words_;
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
+    std::map<int, std::map<std::string, double>> word_freqs_;
     std::map<int, DocumentData> documents_;
-    std::vector<int> document_id_;
+    std::set<int> document_id_;
 
     bool IsStopWord(const std::string& word) const;
 
@@ -64,7 +75,7 @@ private:
 
     static int ComputeAverageRating(const std::vector<int>& ratings);
 
-    struct QueryWord {
+        struct QueryWord {
         std::string data;
         bool is_minus;
         bool is_stop;
@@ -93,9 +104,7 @@ std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_quer
         if (delta < EPS) {
             return lhs.rating > rhs.rating;
         }
-        else {
-            return lhs.relevance > rhs.relevance;
-        }
+        return lhs.relevance > rhs.relevance;
     });
     if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
         matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);

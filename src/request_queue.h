@@ -1,4 +1,5 @@
 #pragma once
+
 #include "search_server.h"
 #include "document.h"
 
@@ -29,6 +30,7 @@ private:
         uint64_t request_time;
         int results_number;
     };
+
     std::deque<QueryResult> requests_;
     const static int min_in_day_ = 1440;
     const SearchServer& search_server_;

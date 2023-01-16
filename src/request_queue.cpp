@@ -22,6 +22,7 @@ std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query)
 int RequestQueue::GetNoResultRequests() const {
     return no_result_request_number_;
 }
+
 void RequestQueue::AddRequest(int results_number) {
     ++current_time_;
     if (!requests_.empty() && current_time_ - requests_.front().request_time >= min_in_day_) {
