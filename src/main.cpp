@@ -1,18 +1,17 @@
 #include "log_duration.h"
-#include "paginator.h"
-#include "remove_duplicates.h"
-#include "request_queue.h"
-#include <stdexcept>
+#include "process_queries.h"
+#include "search_server.h"
 #include "test_example_functions.h"
 
-using namespace std;
+#include <iostream>
+#include <random>
+#include <string>
+#include <vector>
 
 
 int main() {
-    SearchServer search_server(""s);
     //TestRemoveDuplicates();
     //TestRequest();
-    //TestGetDocumentCount();
-
-    return 0;
+    TestGetDocumentCount();
+    TestProcessQueries();
 }

@@ -19,3 +19,5 @@ void TestRemoveDuplicates();
 void TestRequest();
 
 void TestGetDocumentCount();
+
+void TestProcessQueries();
