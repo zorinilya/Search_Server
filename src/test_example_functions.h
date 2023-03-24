@@ -21,3 +21,5 @@ void TestRequest();
 void TestGetDocumentCount();
 
 void TestProcessQueries();
+
+void TestRemoveDocumentParalley();

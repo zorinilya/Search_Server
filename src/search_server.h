@@ -4,6 +4,7 @@
 #include "document.h"
 
 #include <algorithm>
+#include <execution>
 #include <iostream>
 #include <map>
 #include <set>
@@ -51,6 +52,10 @@ public:
     const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
 
     void RemoveDocument(int document_id);
+
+    void RemoveDocument(std::execution::sequenced_policy seq_policy, int document_id);
+
+    void RemoveDocument(std::execution::parallel_policy par_policy, int document_id);
 
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
 

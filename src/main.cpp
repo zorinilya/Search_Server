@@ -12,6 +12,7 @@
 int main() {
     //TestRemoveDuplicates();
     //TestRequest();
-    TestGetDocumentCount();
-    TestProcessQueries();
+    //TestGetDocumentCount();
+    //TestProcessQueries();
+    TestRemoveDocumentParalley();
 }

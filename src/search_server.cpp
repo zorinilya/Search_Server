@@ -28,8 +28,8 @@ void SearchServer::AddDocument(int document_id, const std::string& document, Doc
     std::vector<std::string> words = SplitIntoWordsNoStop(document);
     const double inv_word_count = 1.0 / words.size();
     for (const auto& word : words) {
-        word_freqs_[document_id][std::string(word)] += inv_word_count;
-        word_to_document_freqs_[std::string(word)][document_id] += inv_word_count;
+        word_freqs_[document_id][word] += inv_word_count;
+        word_to_document_freqs_[word][document_id] += inv_word_count;
     }
     documents_.emplace(document_id, DocumentData{ComputeAverageRating(ratings), status});
     document_id_.insert(document_id);
@@ -68,12 +68,43 @@ const std::map<std::string, double>& SearchServer::GetWordFrequencies(int docume
 }
 
 void SearchServer::RemoveDocument(int document_id) {
-    for(const auto [word, freq] : word_freqs_[document_id]) {
-        word_to_document_freqs_[word].erase(document_id);
-        if (word_to_document_freqs_[word].size() == 0) {
+	if (document_id_.count(document_id) == 0) {
+		return;
+	}
+    for(const auto& [word, freq] : word_freqs_.at(document_id)) {
+        word_to_document_freqs_.at(word).erase(document_id);
+        // удалить запись, если слово не присутствует в остальных документах
+        if (word_to_document_freqs_.at(word).size() == 0) {
             word_to_document_freqs_.erase(word);
         }
     }
+    word_freqs_.erase(document_id);
+    documents_.erase(document_id);
+    document_id_.erase(document_id);
+}
+
+void SearchServer::RemoveDocument(std::execution::sequenced_policy seq_policy, int document_id) {
+	SearchServer::RemoveDocument(document_id);
+}
+
+void SearchServer::RemoveDocument(std::execution::parallel_policy par_policy, int document_id) {
+	if (document_id_.count(document_id) == 0) {
+		return;
+	}
+	std::vector<const std::string*> deleted_words;
+	for(const auto& [word, freq] : word_freqs_.at(document_id)) {
+		deleted_words.push_back(&word);
+	}
+	std::for_each(std::execution::par,
+			deleted_words.begin(), deleted_words.end(),
+			[document_id, this](const auto& word) {
+		this->word_to_document_freqs_.at(*word).erase(document_id);
+		// удалить запись, если слово не присутствует в остальных документах
+		//if (this->word_to_document_freqs_.at(*word).size() == 0) {
+		//	this->word_to_document_freqs_.erase(*word);
+		//}
+		return word;
+	});
     word_freqs_.erase(document_id);
     documents_.erase(document_id);
     document_id_.erase(document_id);

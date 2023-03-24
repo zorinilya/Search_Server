@@ -13,6 +13,7 @@
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using namespace std::string_literals;
@@ -210,12 +211,12 @@ std::vector<std::string> GenerateQueries(std::mt19937& generator, const std::vec
 }
 
 template <typename QueriesProcessor>
-void Test(std::string mark, QueriesProcessor processor, const SearchServer& search_server, const std::vector<std::string>& queries) {
-    //LOG_DURATION(mark);
+void TestProcessQueries(std::string mark, QueriesProcessor processor, const SearchServer& search_server, const std::vector<std::string>& queries) {
+    LOG_DURATION(mark);
     const auto documents_lists = processor(search_server, queries);
 }
 
-#define TEST(processor) Test(#processor, processor, search_server, queries)
+#define TEST_PROCESS_QUERIES(processor) TestProcessQueries(#processor, processor, search_server, queries)
 
 void TestProcessQueries() {
     std::mt19937 generator;
@@ -226,7 +227,43 @@ void TestProcessQueries() {
         search_server.AddDocument(i, documents[i], DocumentStatus::ACTUAL, {1, 2, 3});
     }
     const auto queries = GenerateQueries(generator, dictionary, 1, 7);
-    TEST(ProcessQueries);
+    TEST_PROCESS_QUERIES(ProcessQueries);
     std::cerr << "TestProcessQueries - OK\n";
 }
 
+using namespace std;
+
+template <typename ExecutionPolicy>
+void TestRemoveDocumentParalley(std::string mark, SearchServer search_server, ExecutionPolicy&& policy) {
+    LOG_DURATION(mark);
+    const int document_count = search_server.GetDocumentCount();
+    for (int id = 0; id < document_count; ++id) {
+        search_server.RemoveDocument(policy, id);
+    }
+    std::cout << search_server.GetDocumentCount() << " documents\n";
+}
+
+#define TEST_REMOVE_DOCUMENT_PARALLEY(mode) TestRemoveDocumentParalley(#mode, search_server, std::execution::mode)
+
+
+void TestRemoveDocumentParalley() {
+    std::mt19937 generator;
+    const auto dictionary = GenerateDictionary(generator, 20'000, 25);
+    const auto documents = GenerateQueries(generator, dictionary, 10'000, 100);
+    {
+        SearchServer search_server(dictionary[0]);
+        for (size_t i = 0; i < documents.size(); ++i) {
+            search_server.AddDocument(i, documents[i], DocumentStatus::ACTUAL, {1, 2, 3});
+        }
+
+        TEST_REMOVE_DOCUMENT_PARALLEY(seq);
+    }
+    {
+        SearchServer search_server(dictionary[0]);
+        for (size_t i = 0; i < documents.size(); ++i) {
+            search_server.AddDocument(i, documents[i], DocumentStatus::ACTUAL, {1, 2, 3});
+        }
+
+        TEST_REMOVE_DOCUMENT_PARALLEY(par);
+    }
+}
