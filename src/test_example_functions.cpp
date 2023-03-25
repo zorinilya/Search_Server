@@ -189,12 +189,15 @@ std::vector<std::string> GenerateDictionary(std::mt19937& generator, int word_co
     return words;
 }
 
-std::string GenerateQuery(std::mt19937& generator, const std::vector<std::string>& dictionary, int max_word_count) {
+std::string GenerateQuery(std::mt19937& generator, const std::vector<std::string>& dictionary, int max_word_count, double minus_prob = 0) {
     const int word_count = std::uniform_int_distribution(1, max_word_count)(generator);
     std::string query;
     for (int i = 0; i < word_count; ++i) {
         if (!query.empty()) {
             query.push_back(' ');
+        }
+        if (std::uniform_real_distribution<>(0, 1)(generator) < minus_prob) {
+            query.push_back('-');
         }
         query += dictionary[std::uniform_int_distribution<int>(0, dictionary.size() - 1)(generator)];
     }
@@ -231,8 +234,6 @@ void TestProcessQueries() {
     std::cerr << "TestProcessQueries - OK\n";
 }
 
-using namespace std;
-
 template <typename ExecutionPolicy>
 void TestRemoveDocumentParalley(std::string mark, SearchServer search_server, ExecutionPolicy&& policy) {
     LOG_DURATION(mark);
@@ -244,7 +245,6 @@ void TestRemoveDocumentParalley(std::string mark, SearchServer search_server, Ex
 }
 
 #define TEST_REMOVE_DOCUMENT_PARALLEY(mode) TestRemoveDocumentParalley(#mode, search_server, std::execution::mode)
-
 
 void TestRemoveDocumentParalley() {
     std::mt19937 generator;
@@ -266,4 +266,33 @@ void TestRemoveDocumentParalley() {
 
         TEST_REMOVE_DOCUMENT_PARALLEY(par);
     }
+}
+
+template <typename ExecutionPolicy>
+void TestMatchDocumentParalley(std::string_view mark, SearchServer search_server, const std::string& query, ExecutionPolicy&& policy) {
+    LOG_DURATION(mark);
+    const int document_count = search_server.GetDocumentCount();
+    int word_count = 0;
+    for (int id = 0; id < document_count; ++id) {
+        const auto [words, status] = search_server.MatchDocument(policy, query, id);
+        word_count += words.size();
+    }
+    std::cout << word_count << std::endl;
+}
+
+#define TEST_MATCH_DOCUMENT_PARALLEY(policy) TestMatchDocumentParalley(#policy, search_server, query, std::execution::policy)
+
+void TestMatchDocumentParalley() {
+    std::mt19937 generator;
+    const auto dictionary = GenerateDictionary(generator, 1000, 10);
+    const auto documents = GenerateQueries(generator, dictionary, 10'000, 70);
+    const std::string query = GenerateQuery(generator, dictionary, 500, 0.1);
+
+    SearchServer search_server(dictionary[0]);
+    for (size_t i = 0; i < documents.size(); ++i) {
+        search_server.AddDocument(i, documents[i], DocumentStatus::ACTUAL, {1, 2, 3});
+    }
+
+    TEST_MATCH_DOCUMENT_PARALLEY(seq);
+    TEST_MATCH_DOCUMENT_PARALLEY(par);
 }

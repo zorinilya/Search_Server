@@ -59,6 +59,16 @@ public:
 
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
 
+    std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(
+    		std::execution::sequenced_policy seq_policy,
+    		const std::string& raw_query,
+    		int document_id) const;
+
+    std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(
+    		std::execution::parallel_policy par_policy,
+    		const std::string& raw_query,
+    		int document_id) const;
+
 private:
     struct DocumentData {
         int rating;
@@ -81,19 +91,27 @@ private:
 
     static int ComputeAverageRating(const std::vector<int>& ratings);
 
-        struct QueryWord {
+    struct QueryWord {
         std::string data;
         bool is_minus;
         bool is_stop;
     };
 
     QueryWord ParseQueryWord(std::string text) const;
+
     struct Query {
         std::set<std::string> plus_words;
         std::set<std::string> minus_words;
     };
 
+    struct Query_Par {
+        std::vector<std::string> plus_words;
+        std::vector<std::string> minus_words;
+    };
+
     Query ParseQuery(const std::string& text) const;
+
+    Query_Par ParseQueryPar(const std::string& text) const;
 
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
 

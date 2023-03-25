@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <vector>
 
 
 using namespace std::string_literals;
@@ -133,6 +134,54 @@ std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument
     return {matched_words, documents_.at(document_id).status};
 }
 
+std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(
+		std::execution::sequenced_policy seq_policy,
+		const std::string& raw_query,
+		int document_id)
+const {
+	return SearchServer::MatchDocument(raw_query, document_id);
+}
+
+std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(
+		std::execution::parallel_policy par_policy,
+		const std::string& raw_query,
+		int document_id)
+const {
+    Query_Par query = ParseQueryPar(raw_query);
+    if (std::any_of(std::execution::par, query.minus_words.begin(), query.minus_words.end(),
+    		[document_id, this](const std::string& word) {
+    	if (!word_to_document_freqs_.count(word)) {
+    		return false;
+    	}
+    	if (word_to_document_freqs_.at(word).count(document_id)) {
+    		return true;
+    	}
+    	return false;
+    })) {
+    	return {std::vector<std::string>{}, documents_.at(document_id).status};
+    }
+    std::vector<std::string> matched_words(query.plus_words.size());
+    std::transform(std::execution::par,
+    		query.plus_words.begin(), query.plus_words.end(),
+			matched_words.begin(),
+			[document_id, this](const std::string& word) {
+    	if (!word_to_document_freqs_.count(word)) {
+    		return ""s;
+    	}
+        if (word_to_document_freqs_.at(word).count(document_id)) {
+            return word;
+        }
+    	return ""s;
+    });
+    std::sort(matched_words.begin(), matched_words.end());
+    auto it = std::unique(matched_words.begin(), matched_words.end());
+    matched_words.erase(it, matched_words.end());
+    if (*matched_words.begin() == ""s) {
+    	matched_words.erase(matched_words.begin());
+    }
+    return {matched_words, documents_.at(document_id).status};
+}
+
 bool SearchServer::IsStopWord(const std::string& word) const {
     return stop_words_.count(std::string(word)) > 0;
 }
@@ -205,7 +254,25 @@ SearchServer::Query SearchServer::ParseQuery(const std::string& text) const {
                 query.plus_words.insert(query_word.data);
             }
         }
+    }
+    return query;
 }
+
+SearchServer::Query_Par SearchServer::ParseQueryPar(const std::string& text) const {
+    Query_Par query;
+    for (const std::string& word : SplitIntoWords(text)) {
+        if (!IsValidWord(word)) {
+            throw std::invalid_argument("invalid char (with codes from 0 to 31)"s);
+        }
+        const QueryWord query_word = ParseQueryWord(word);
+        if (!query_word.is_stop) {
+            if (query_word.is_minus) {
+                query.minus_words.push_back(query_word.data);
+            } else {
+                query.plus_words.push_back(query_word.data);
+            }
+        }
+    }
     return query;
 }
 

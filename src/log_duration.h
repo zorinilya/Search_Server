@@ -16,7 +16,7 @@ public:
     // с помощью using для удобства
     using Clock = std::chrono::steady_clock;
 
-    LogDuration(const std::string& id, std::ostream& output = std::cerr)
+    LogDuration(const std::string_view& id, std::ostream& output = std::cerr)
         : id_(id)
         , output_(output)
     {

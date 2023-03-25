@@ -15,4 +15,5 @@ int main() {
     //TestGetDocumentCount();
     //TestProcessQueries();
     TestRemoveDocumentParalley();
+    TestMatchDocumentParalley();
 }
