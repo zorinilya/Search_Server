@@ -25,3 +25,5 @@ void TestProcessQueries();
 void TestRemoveDocumentParalley();
 
 void TestMatchDocumentParalley();
+
+void MyTest();

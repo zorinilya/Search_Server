@@ -39,7 +39,7 @@ void FindTopDocuments(const SearchServer& search_server, const std::string& raw_
     }
 }
 
-void MatchDocuments(SearchServer& search_server, const std::string& query) {
+void MatchDocuments(SearchServer& search_server, std::string_view& query) {
     try {
         std::cout << "Матчинг документов по запросу: "s << query << std::endl;
         for (const int document_id : search_server) {
@@ -100,35 +100,35 @@ void TestRequest() {
 
     {
         std::cout << "Запрос 1: "s << std::endl;
-        auto results = search_server.FindTopDocuments("big white dog");
+        auto results = search_server.FindTopDocuments("big white dog"s);
         for (const auto item : results) {
-            std::cout << item << "\n";
+            std::cout << item << "\n"s;
         }
     }
     {
         std::cout << "Запрос 2: "s << std::endl;
-        auto results = search_server.FindTopDocuments("big white dog", DocumentStatus::IRRELEVANT);
+        auto results = search_server.FindTopDocuments("big white dog"s, DocumentStatus::IRRELEVANT);
         for (const auto item : results) {
-            std::cout << item << "\n";
+            std::cout << item << "\n"s;
         }
     }
     {
         std::cout << "Запрос 3: "s << std::endl;
-        auto results = search_server.FindTopDocuments("big white dog fancy collar");
+        auto results = search_server.FindTopDocuments("big white dog fancy collar"s);
         for (const auto item : results) {
-            std::cout << item << "\n";
+            std::cout << item << "\n"s;
         }
     }
     {
         std::cout << "Запрос 4: "s << std::endl;
-        auto results = search_server.FindTopDocuments("big cat white dog fancy collar",
+        auto results = search_server.FindTopDocuments("big cat white dog fancy collar"s,
                 [](int document_id, DocumentStatus status, int rating) {
             return (document_id > 2)
                     && ((status == DocumentStatus::IRRELEVANT) || (status == DocumentStatus::ACTUAL))
                     && (rating > 1);
         });
         for (const auto item : results) {
-            std::cout << item << "\n";
+            std::cout << item << "\n"s;
         }
     }
 
@@ -150,14 +150,15 @@ void TestRequest() {
     request_queue.AddFindRequest("sparrow"s);
     std::cout << "After \"sparrow\" Total empty requests: "s << request_queue.GetNoResultRequests() << std::endl;
 
+    /*{
+        LOG_DURATION_STREAM("MatchDocuments"s, std::cerr);
+        std::string raw_query = "big white dog"s;
+        MatchDocuments(search_server, raw_query);
+    }*/
     {
-        LOG_DURATION_STREAM("MatchDocuments", std::cerr);
-        MatchDocuments(search_server, "big white dog");
-    }
-    {
-        LOG_DURATION_STREAM("FindTopDocuments", std::cerr);
+        LOG_DURATION_STREAM("FindTopDocuments"s, std::cerr);
         for (int i = 0; i < 1; ++i) {
-            FindTopDocuments(search_server, "big white dog");
+            FindTopDocuments(search_server, "big white dog"s);
         }
     }
 

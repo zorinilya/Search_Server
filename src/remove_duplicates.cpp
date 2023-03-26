@@ -8,9 +8,9 @@
 
 void RemoveDuplicates(SearchServer& search_server) {
     std::vector<int> document_for_delete;
-    std::set<std::set<std::string>> document_words;
+    std::set<std::set<std::string_view>> document_words;
     for (const int document_id : search_server) {
-        std::set<std::string> words;
+        std::set<std::string_view> words;
         for (const auto [word, freq] : search_server.GetWordFrequencies(document_id)) {
             words.insert(word);
         }
