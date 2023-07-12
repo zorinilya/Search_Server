@@ -11,9 +11,11 @@
 
 int main() {
     //TestRemoveDuplicates();
-    //TestRequest();
-    //TestGetDocumentCount();
-    //TestProcessQueries();
-    //TestRemoveDocumentParalley();
+    TestRequest();
+    TestGetDocumentCount();
+    TestProcessQueries();
+    TestRemoveDocumentParalley();
     TestMatchDocumentParalley();
+
+    std::cout << "All tests are OK";
 }
