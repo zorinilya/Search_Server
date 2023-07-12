@@ -39,13 +39,13 @@ void SearchServer::AddDocument(int document_id, const std::string_view& document
     document_id_.insert(document_id);
 }
 
-std::vector<Document> SearchServer::FindTopDocuments(const std::string_view& raw_query, DocumentStatus status) const {
+std::vector<Document> SearchServer::FindTopDocuments(std::string_view raw_query, DocumentStatus status) const {
     return SearchServer::FindTopDocuments(raw_query, [status](int document_id, DocumentStatus document_status, int document_rating)
             { return document_status == status; }
     );
 }
 
-std::vector<Document> SearchServer::FindTopDocuments(const std::string_view& raw_query) const {
+std::vector<Document> SearchServer::FindTopDocuments(std::string_view raw_query) const {
     return SearchServer::FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
 }
 
@@ -150,12 +150,6 @@ std::tuple<std::vector<std::string_view>, DocumentStatus> SearchServer::MatchDoc
         int document_id)
 const {
     QueryPar query = ParseQueryPar(raw_query);
-
-    for(const auto& item : query.plus_words) {
-    	std::cout << item << "_";
-    }
-    std::cout << "- this is QueryPar" << std::endl;
-
     if (std::any_of(std::execution::par, query.minus_words.begin(), query.minus_words.end(),
             [document_id, this](const std::string_view word) {
         if (!word_to_document_freqs_.count(std::string(word))) {

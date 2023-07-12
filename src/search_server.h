@@ -37,11 +37,11 @@ public:
     void AddDocument(int document_id, const std::string_view& document, DocumentStatus status, const std::vector<int>& ratings);
 
     template<typename Predicate>
-    std::vector<Document> FindTopDocuments(const std::string_view& raw_query, Predicate predicate) const;
+    std::vector<Document> FindTopDocuments(std::string_view raw_query, Predicate predicate) const;
 
-    std::vector<Document> FindTopDocuments(const std::string_view& raw_query, DocumentStatus status) const;
+    std::vector<Document> FindTopDocuments(std::string_view raw_query, DocumentStatus status) const;
 
-    std::vector<Document> FindTopDocuments(const std::string_view& raw_query) const;
+    std::vector<Document> FindTopDocuments(std::string_view raw_query) const;
 
     int GetDocumentCount() const;
 
@@ -122,7 +122,7 @@ private:
 };
 
 template<typename Predicate>
-std::vector<Document> SearchServer::FindTopDocuments(const std::string_view& raw_query, Predicate predicate) const {
+std::vector<Document> SearchServer::FindTopDocuments(std::string_view raw_query, Predicate predicate) const {
     const Query query = ParseQuery(raw_query);
     auto matched_documents = SearchServer::FindAllDocuments(query, predicate);
     sort(matched_documents.begin(), matched_documents.end(), [](const Document& lhs, const Document& rhs) {
